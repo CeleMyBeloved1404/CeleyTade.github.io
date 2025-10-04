@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Guess the Song Game</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      text-align: center;
+      background: #f2f2f2;
+      margin: 0;
+      padding: 20px;
+    }
+    h1 {
+      margin-bottom: 20px;
+    }
+    #video-container {
+      margin: 20px auto;
+      width: 560px;
+      max-width: 100%;
+    }
+    .player-buttons {
+      display: flex;
+      justify-content: space-around;
+      margin: 20px 0;
+    }
+    .player-btn {
+      flex: 1;
+      margin: 10px;
+      padding: 30px;
+      font-size: 24px;
+      font-weight: bold;
+      border: none;
+      border-radius: 15px;
+      cursor: pointer;
+      color: white;
+    }
+    #player1-btn { background-color: #e74c3c; }
+    #player2-btn { background-color: #3498db; }
+    #message {
+      font-size: 20px;
+      margin: 15px 0;
+      font-weight: bold;
+    }
+    .scores {
+      display: flex;
+      justify-content: space-around;
+      margin-top: 20px;
+    }
+    .score-box {
+      background: white;
+      padding: 15px;
+      border-radius: 10px;
+      box-shadow: 0px 3px 6px rgba(0,0,0,0.2);
+      width: 200px;
+    }
+    .score-box h2 {
+      margin: 5px 0;
+    }
+    .score-buttons {
+      display: flex;
+      justify-content: space-between;
+      margin-top: 10px;
+    }
+    .score-btn {
+      flex: 1;
+      margin: 0 5px;
+      padding: 10px;
+      font-size: 16px;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      font-weight: bold;
+      color: white;
+    }
+    .add { background-color: #2ecc71; }
+    .subtract { background-color: #e67e22; }
+  </style>
+</head>
+<body>
+  <h1>🎵 Guess the Song 🎵</h1>
+
+  <!-- Input para la URL de YouTube -->
+  <div>
+    <input type="text" id="youtube-url" placeholder="Paste YouTube URL here" size="50">
+    <button onclick="loadVideo()">Load Video</button>
+  </div>
+
+  <!-- Contenedor del video -->
+  <div id="video-container">
+    <div id="player"></div>
+  </div>
+
+  <!-- Botones de jugadores -->
+  <div class="player-buttons">
+    <button id="player1-btn" class="player-btn" onclick="playerPressed(1)">Player 1</button>
+    <button id="player2-btn" class="player-btn" onclick="playerPressed(2)">Player 2</button>
+  </div>
+
+  <div id="message"></div>
+
+  <!-- Puntajes -->
+  <div class="scores">
+    <div class="score-box">
+      <h2>Player 1: <span id="score1">0</span></h2>
+      <div class="score-buttons">
+        <button class="score-btn add" onclick="addPoint(1)">+1</button>
+        <button class="score-btn subtract" onclick="subtractPoint(1)">-1</button>
+      </div>
+    </div>
+    <div class="score-box">
+      <h2>Player 2: <span id="score2">0</span></h2>
+      <div class="score-buttons">
+        <button class="score-btn add" onclick="addPoint(2)">+1</button>
+        <button class="score-btn subtract" onclick="subtractPoint(2)">-1</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- YouTube API -->
+  <script src="https://www.youtube.com/iframe_api"></script>
+  <script>
+    let player;
+    let score1 = 0;
+    let score2 = 0;
+
+    // Cargar API de YouTube
+    function onYouTubeIframeAPIReady() {
+      player = new YT.Player('player', {
+        height: '315',
+        width: '560',
+        videoId: '',
+        events: {}
+      });
+    }
+
+    // Extraer ID del video desde la URL
+    function getYouTubeID(url) {
+      let regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=)([^#&?]*).*/;
+      let match = url.match(regExp);
+      return (match && match[2].length === 11) ? match[2] : null;
+    }
+
+    // Cargar video desde input
+    function loadVideo() {
+      let url = document.getElementById("youtube-url").value;
+      let videoId = getYouTubeID(url);
+      if (videoId) {
+        player.loadVideoById(videoId);
+        document.getElementById("message").innerText = "";
+      } else {
+        alert("Invalid YouTube URL");
+      }
+    }
+
+    // Cuando un jugador presiona el botón
+    function playerPressed(num) {
+      if (player && player.pauseVideo) {
+        player.pauseVideo();
+      }
+      document.getElementById("message").innerText = "Player " + num + " pressed first!";
+    }
+
+    // Sumar puntos
+    function addPoint(num) {
+      if (num === 1) {
+        score1++;
+        document.getElementById("score1").innerText = score1;
+      } else {
+        score2++;
+        document.getElementById("score2").innerText = score2;
+      }
+    }
+
+    // Restar puntos (ahora sí permite negativos)
+    function subtractPoint(num) {
+      if (num === 1) {
+        score1--;
+        document.getElementById("score1").innerText = score1;
+      } else {
+        score2--;
+        document.getElementById("score2").innerText = score2;
+      }
+    }
+  </script>
+</body>
+</html>

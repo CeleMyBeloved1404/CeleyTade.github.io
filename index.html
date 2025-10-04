@@ -11,19 +11,9 @@
       margin: 0;
       padding: 20px;
     }
-    h1 {
-      margin-bottom: 20px;
-    }
-    #video-container {
-      margin: 20px auto;
-      width: 560px;
-      max-width: 100%;
-    }
-    .player-buttons {
-      display: flex;
-      justify-content: space-around;
-      margin: 20px 0;
-    }
+    h1 { margin-bottom: 20px; }
+    #video-container { margin: 20px auto; width: 560px; max-width: 100%; }
+    .player-buttons { display: flex; justify-content: space-around; margin: 20px 0; }
     .player-btn {
       flex: 1;
       margin: 10px;
@@ -37,16 +27,8 @@
     }
     #player1-btn { background-color: #fcc7ef; }
     #player2-btn { background-color: #9bd6f8; }
-    #message {
-      font-size: 20px;
-      margin: 15px 0;
-      font-weight: bold;
-    }
-    .scores {
-      display: flex;
-      justify-content: space-around;
-      margin-top: 20px;
-    }
+    #message { font-size: 20px; margin: 15px 0; font-weight: bold; }
+    .scores { display: flex; justify-content: space-around; margin-top: 20px; }
     .score-box {
       background: white;
       padding: 15px;
@@ -54,14 +36,8 @@
       box-shadow: 0px 3px 6px rgba(0,0,0,0.2);
       width: 200px;
     }
-    .score-box h2 {
-      margin: 5px 0;
-    }
-    .score-buttons {
-      display: flex;
-      justify-content: space-between;
-      margin-top: 10px;
-    }
+    .score-box h2 { margin: 5px 0; }
+    .score-buttons { display: flex; justify-content: space-between; margin-top: 10px; }
     .score-btn {
       flex: 1;
       margin: 0 5px;
@@ -142,9 +118,7 @@
       if (videoId) {
         player.loadVideoById(videoId);
         document.getElementById("message").innerText = "";
-      } else {
-        alert("Invalid YouTube URL");
-      }
+      } else { alert("Invalid YouTube URL"); }
     }
 
     function addPoint(num) {
@@ -158,23 +132,25 @@
     }
   </script>
 
-  <!-- Firebase Realtime Database para sincronización -->
+  <!-- Firebase con Analytics y Realtime Database para sincronización -->
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/12.3.0/firebase-app.js";
+    import { getAnalytics } from "https://www.gstatic.com/firebasejs/12.3.0/firebase-analytics.js";
     import { getDatabase, ref, set, onValue } from "https://www.gstatic.com/firebasejs/12.3.0/firebase-database.js";
 
     const firebaseConfig = {
       apiKey: "AIzaSyDnm7xpjFtaqwYeCRJG0ms8QR7J9k010Tk",
       authDomain: "juegoadivinalacancion-5152e.firebaseapp.com",
-      databaseURL: "https://juegoadivinalacancion-5152e-default-rtdb.firebaseio.com",
       projectId: "juegoadivinalacancion-5152e",
-      storageBucket: "juegoadivinalacancion-5152e.appspot.com",
+      storageBucket: "juegoadivinalacancion-5152e.firebasestorage.app",
       messagingSenderId: "543704119927",
       appId: "1:543704119927:web:613939b3ffee9dab25e472",
       measurementId: "G-TYSK5TJCMZ"
     };
 
+    // Initialize Firebase
     const app = initializeApp(firebaseConfig);
+    const analytics = getAnalytics(app);
     const db = getDatabase(app);
 
     const playerButtons = {
@@ -182,7 +158,7 @@
       2: document.getElementById("player2-btn")
     };
 
-    // Función para presionar botón y sincronizar
+    // Presionar botón y sincronizar
     function playerPressed(num) {
       if (player && player.pauseVideo) player.pauseVideo();
       set(ref(db, 'game/lastClick'), { player: num, time: Date.now() });
@@ -199,7 +175,6 @@
       playerButtons[1].disabled = true;
       playerButtons[2].disabled = true;
 
-      // Mostrar solo el botón del jugador que presionó primero
       playerButtons[1].style.display = num === 1 ? "inline-block" : "none";
       playerButtons[2].style.display = num === 2 ? "inline-block" : "none";
     });

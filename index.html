@@ -35,8 +35,8 @@
       cursor: pointer;
       color: white;
     }
-    #player1-btn { background-color: #e74c3c; }
-    #player2-btn { background-color: #3498db; }
+    #player1-btn { background-color: #fcc7ef; }
+    #player2-btn { background-color: #9bd6f8; }
     #message {
       font-size: 20px;
       margin: 15px 0;
@@ -78,7 +78,7 @@
   </style>
 </head>
 <body>
-  <h1>🎵 Guess the Song 🎵</h1>
+  <h1>🎵💕 Adivina la cancion con Cele y Tade 💕🎵</h1>
 
   <!-- Input para la URL de YouTube -->
   <div>
@@ -93,8 +93,8 @@
 
   <!-- Botones de jugadores -->
   <div class="player-buttons">
-    <button id="player1-btn" class="player-btn" onclick="playerPressed(1)">Player 1</button>
-    <button id="player2-btn" class="player-btn" onclick="playerPressed(2)">Player 2</button>
+    <button id="player1-btn" class="player-btn" onclick="playerPressed(1)">Cele</button>
+    <button id="player2-btn" class="player-btn" onclick="playerPressed(2)">Tade</button>
   </div>
 
   <div id="message"></div>
@@ -102,14 +102,14 @@
   <!-- Puntajes -->
   <div class="scores">
     <div class="score-box">
-      <h2>Player 1: <span id="score1">0</span></h2>
+      <h2>Cele: <span id="score1">0</span></h2>
       <div class="score-buttons">
         <button class="score-btn add" onclick="addPoint(1)">+1</button>
         <button class="score-btn subtract" onclick="subtractPoint(1)">-1</button>
       </div>
     </div>
     <div class="score-box">
-      <h2>Player 2: <span id="score2">0</span></h2>
+      <h2>Tade: <span id="score2">0</span></h2>
       <div class="score-buttons">
         <button class="score-btn add" onclick="addPoint(2)">+1</button>
         <button class="score-btn subtract" onclick="subtractPoint(2)">-1</button>
@@ -158,7 +158,11 @@
       if (player && player.pauseVideo) {
         player.pauseVideo();
       }
-      document.getElementById("message").innerText = "Player " + num + " pressed first!";
+      if (num === 1) {
+        document.getElementById("message").innerText = "¡Cele presionó primero!";
+      } else {
+        document.getElementById("message").innerText = "¡Tade presionó primero!";
+      }
     }
 
     // Sumar puntos

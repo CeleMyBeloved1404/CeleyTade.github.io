@@ -96,6 +96,7 @@
     <button id="player1-btn" class="player-btn" onclick="playerPressed(1)">Cele</button>
     <button id="player2-btn" class="player-btn" onclick="playerPressed(2)">Tade</button>
   </div>
+  <button id="reset-btn" onclick="resetButtons()" style="margin-bottom:20px; font-size:18px;">Resetear Turno</button>
 
   <div id="message"></div>
 
@@ -158,11 +159,28 @@
       if (player && player.pauseVideo) {
         player.pauseVideo();
       }
+      // Bloquear ambos botones
+      document.getElementById("player1-btn").disabled = true;
+      document.getElementById("player2-btn").disabled = true;
+      // Solo mostrar el que presionó primero
       if (num === 1) {
+        document.getElementById("player1-btn").style.display = "inline-block";
+        document.getElementById("player2-btn").style.display = "none";
         document.getElementById("message").innerText = "¡Cele presionó primero!";
       } else {
+        document.getElementById("player2-btn").style.display = "inline-block";
+        document.getElementById("player1-btn").style.display = "none";
         document.getElementById("message").innerText = "¡Tade presionó primero!";
       }
+    }
+
+    // Resetear botones para la siguiente ronda
+    function resetButtons() {
+      document.getElementById("player1-btn").disabled = false;
+      document.getElementById("player2-btn").disabled = false;
+      document.getElementById("player1-btn").style.display = "inline-block";
+      document.getElementById("player2-btn").style.display = "inline-block";
+      document.getElementById("message").innerText = "";
     }
 
     // Sumar puntos

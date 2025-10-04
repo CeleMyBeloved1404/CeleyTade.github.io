@@ -80,18 +80,15 @@
 <body>
   <h1>🎵💕 Adivina la cancion con Cele y Tade 💕🎵</h1>
 
-  <!-- Input para la URL de YouTube -->
   <div>
     <input type="text" id="youtube-url" placeholder="Paste YouTube URL here" size="50">
     <button onclick="loadVideo()">Load Video</button>
   </div>
 
-  <!-- Contenedor del video -->
   <div id="video-container">
     <div id="player"></div>
   </div>
 
-  <!-- Botones de jugadores -->
   <div class="player-buttons">
     <button id="player1-btn" class="player-btn" onclick="playerPressed(1)">Cele</button>
     <button id="player2-btn" class="player-btn" onclick="playerPressed(2)">Tade</button>
@@ -100,7 +97,6 @@
 
   <div id="message"></div>
 
-  <!-- Puntajes -->
   <div class="scores">
     <div class="score-box">
       <h2>Cele: <span id="score1">0</span></h2>
@@ -125,7 +121,6 @@
     let score1 = 0;
     let score2 = 0;
 
-    // Cargar API de YouTube
     function onYouTubeIframeAPIReady() {
       player = new YT.Player('player', {
         height: '315',
@@ -135,14 +130,12 @@
       });
     }
 
-    // Extraer ID del video desde la URL
     function getYouTubeID(url) {
       let regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=)([^#&?]*).*/;
       let match = url.match(regExp);
       return (match && match[2].length === 11) ? match[2] : null;
     }
 
-    // Cargar video desde input
     function loadVideo() {
       let url = document.getElementById("youtube-url").value;
       let videoId = getYouTubeID(url);
@@ -154,55 +147,71 @@
       }
     }
 
-    // Cuando un jugador presiona el botón
-    function playerPressed(num) {
-      if (player && player.pauseVideo) {
-        player.pauseVideo();
-      }
-      // Bloquear ambos botones
-      document.getElementById("player1-btn").disabled = true;
-      document.getElementById("player2-btn").disabled = true;
-      // Solo mostrar el que presionó primero
-      if (num === 1) {
-        document.getElementById("player1-btn").style.display = "inline-block";
-        document.getElementById("player2-btn").style.display = "none";
-        document.getElementById("message").innerText = "¡Cele presionó primero!";
-      } else {
-        document.getElementById("player2-btn").style.display = "inline-block";
-        document.getElementById("player1-btn").style.display = "none";
-        document.getElementById("message").innerText = "¡Tade presionó primero!";
-      }
-    }
-
-    // Resetear botones para la siguiente ronda
-    function resetButtons() {
-      document.getElementById("player1-btn").disabled = false;
-      document.getElementById("player2-btn").disabled = false;
-      document.getElementById("player1-btn").style.display = "inline-block";
-      document.getElementById("player2-btn").style.display = "inline-block";
-      document.getElementById("message").innerText = "";
-    }
-
-    // Sumar puntos
     function addPoint(num) {
-      if (num === 1) {
-        score1++;
-        document.getElementById("score1").innerText = score1;
-      } else {
-        score2++;
-        document.getElementById("score2").innerText = score2;
-      }
+      if (num === 1) { score1++; document.getElementById("score1").innerText = score1; }
+      else { score2++; document.getElementById("score2").innerText = score2; }
     }
 
-    // Restar puntos (ahora sí permite negativos)
     function subtractPoint(num) {
-      if (num === 1) {
-        score1--;
-        document.getElementById("score1").innerText = score1;
-      } else {
-        score2--;
-        document.getElementById("score2").innerText = score2;
-      }
+      if (num === 1) { score1--; document.getElementById("score1").innerText = score1; }
+      else { score2--; document.getElementById("score2").innerText = score2; }
+    }
+  </script>
+
+  <!-- Firebase Realtime Database para sincronización -->
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/12.3.0/firebase-app.js";
+    import { getDatabase, ref, set, onValue } from "https://www.gstatic.com/firebasejs/12.3.0/firebase-database.js";
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyDnm7xpjFtaqwYeCRJG0ms8QR7J9k010Tk",
+      authDomain: "juegoadivinalacancion-5152e.firebaseapp.com",
+      databaseURL: "https://juegoadivinalacancion-5152e-default-rtdb.firebaseio.com",
+      projectId: "juegoadivinalacancion-5152e",
+      storageBucket: "juegoadivinalacancion-5152e.appspot.com",
+      messagingSenderId: "543704119927",
+      appId: "1:543704119927:web:613939b3ffee9dab25e472",
+      measurementId: "G-TYSK5TJCMZ"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const db = getDatabase(app);
+
+    const playerButtons = {
+      1: document.getElementById("player1-btn"),
+      2: document.getElementById("player2-btn")
+    };
+
+    // Función para presionar botón y sincronizar
+    function playerPressed(num) {
+      if (player && player.pauseVideo) player.pauseVideo();
+      set(ref(db, 'game/lastClick'), { player: num, time: Date.now() });
+    }
+
+    // Escuchar cambios en tiempo real
+    onValue(ref(db, 'game/lastClick'), (snapshot) => {
+      const data = snapshot.val();
+      if (!data) return;
+
+      const num = data.player;
+      document.getElementById("message").innerText = num === 1 ? "¡Cele presionó primero!" : "¡Tade presionó primero!";
+
+      playerButtons[1].disabled = true;
+      playerButtons[2].disabled = true;
+
+      // Mostrar solo el botón del jugador que presionó primero
+      playerButtons[1].style.display = num === 1 ? "inline-block" : "none";
+      playerButtons[2].style.display = num === 2 ? "inline-block" : "none";
+    });
+
+    // Resetear turno
+    window.resetButtons = function() {
+      playerButtons[1].disabled = false;
+      playerButtons[2].disabled = false;
+      playerButtons[1].style.display = "inline-block";
+      playerButtons[2].style.display = "inline-block";
+      document.getElementById("message").innerText = "";
+      set(ref(db, 'game/lastClick'), null);
     }
   </script>
 </body>

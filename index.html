@@ -1,103 +1,187 @@
 <!DOCTYPE html>
-<html lang="es">
+<html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Juego Adivina la Canción</title>
+  <meta charset="UTF-8">
+  <title>Te amo mi bichita</title>
   <style>
     body {
-      background: #121212;
-      color: #fff;
       font-family: Arial, sans-serif;
       text-align: center;
-      padding-top: 50px;
+      background: #f2f2f2;
+      margin: 0;
+      padding: 20px;
     }
-    #player {
-      margin-top: 30px;
-    }
-    button {
-      background: #1db954;
-      color: white;
+    h1 { margin-bottom: 20px; }
+    #video-container { margin: 20px auto; width: 560px; max-width: 100%; }
+    .player-buttons { display: flex; justify-content: space-around; margin: 20px 0; }
+    .player-btn {
+      flex: 1;
+      margin: 10px;
+      padding: 30px;
+      font-size: 24px;
+      font-weight: bold;
       border: none;
-      border-radius: 25px;
-      padding: 10px 20px;
-      margin: 5px;
+      border-radius: 15px;
       cursor: pointer;
-      font-size: 16px;
+      color: white;
     }
-    button:hover {
-      background: #1ed760;
+    #player1-btn { background-color: #fcc7ef; }
+    #player2-btn { background-color: #9bd6f8; }
+    #message { font-size: 20px; margin: 15px 0; font-weight: bold; }
+    .scores { display: flex; justify-content: space-around; margin-top: 20px; }
+    .score-box {
+      background: white;
+      padding: 15px;
+      border-radius: 10px;
+      box-shadow: 0px 3px 6px rgba(0,0,0,0.2);
+      width: 200px;
+    }
+    .score-box h2 { margin: 5px 0; }
+    .score-buttons { display: flex; justify-content: space-between; margin-top: 10px; }
+    .score-btn {
+      flex: 1;
+      margin: 0 5px;
+      padding: 10px;
+      font-size: 16px;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      font-weight: bold;
+      color: white;
+    }
+    .add { background-color: #2ecc71; }
+    .subtract { background-color: #e67e22; }
+
+    /* 🎵 Spotify section */
+    #spotify-player {
+      margin-top: 40px;
+    }
+    #spotify-frame {
+      border-radius: 12px;
+      width: 300px;
+      height: 380px;
+      border: none;
+    }
+    #reveal-btn {
+      margin-top: 10px;
+      padding: 10px 20px;
+      font-size: 16px;
+      border: none;
+      border-radius: 8px;
+      background-color: #1DB954;
+      color: white;
+      cursor: pointer;
+      font-weight: bold;
+    }
+    #song-title {
+      margin-top: 10px;
+      font-size: 18px;
+      font-weight: bold;
+      color: #333;
+      display: none;
     }
   </style>
 </head>
 <body>
+  <h1>🎵💕 Adivina la cancion con Cele y Tade 💕🎵</h1>
 
-  <h1>🎵 Adivina la Canción (Versión Spotify)</h1>
+  <!-- Botones de jugadores -->
+  <div class="player-buttons">
+    <button id="player1-btn" class="player-btn" onclick="playerPressed(1)">Cele</button>
+    <button id="player2-btn" class="player-btn" onclick="playerPressed(2)">Tade</button>
+  </div>
+  <button id="reset-btn" onclick="resetButtons()" style="margin-bottom:20px; font-size:18px;">Resetear Turno</button>
 
-  <div id="player">
-    <audio id="audioPlayer" controls></audio>
-    <div>
-      <button id="playBtn">▶️ Play</button>
-      <button id="nextBtn">⏭️ Siguiente</button>
-      <button id="revealBtn">❓ Revelar Canción</button>
+  <div id="message"></div>
+
+  <div class="scores">
+    <div class="score-box">
+      <h2>Cele: <span id="score1">0</span></h2>
+      <div class="score-buttons">
+        <button class="score-btn add" onclick="addPoint(1)">+1</button>
+        <button class="score-btn subtract" onclick="subtractPoint(1)">-1</button>
+      </div>
     </div>
-    <p id="songName" style="margin-top: 20px; font-weight: bold;"></p>
+    <div class="score-box">
+      <h2>Tade: <span id="score2">0</span></h2>
+      <div class="score-buttons">
+        <button class="score-btn add" onclick="addPoint(2)">+1</button>
+        <button class="score-btn subtract" onclick="subtractPoint(2)">-1</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 🎵 Spotify Player Section -->
+  <div id="spotify-player">
+    <h2>🎶 Reproductor de canciones</h2>
+    <iframe id="spotify-frame" 
+      src="https://open.spotify.com/embed/track/4VqPOruhp5EdPBeR92t6lQ?utm_source=generator" 
+      allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture" 
+      loading="lazy">
+    </iframe>
+    <br>
+    <button id="next-btn" onclick="nextSong()">⏭️ Siguiente canción</button>
+    <button id="reveal-btn" onclick="revealSong()">👀 Revelar canción</button>
+    <div id="song-title"></div>
   </div>
 
   <script>
-    // 🔑 TOKEN TEMPORAL DE SPOTIFY (reemplazalo con el tuyo)
-    const TOKEN = "1POdFZRZbvb...qqillRxMr2z";
+    let score1 = 0, score2 = 0;
 
-    // Lista de canciones base (puede ser dinámica después)
-    const trackIds = [
-      "4uLU6hMCjMI75M1A2tKUQC", // Eminem - Lose Yourself
-      "3n3Ppam7vgaVa1iaRUc9Lp", // Michael Jackson - Billie Jean
-      "0VjIjW4GlUZAMYd2vXMi3b", // The Weeknd - Blinding Lights
-      "7GhIk7Il098yCjg4BQjzvb", // Rick Astley - Never Gonna Give You Up
-      "3AJwUDP919kvQ9QcozQPxg"  // Queen - Bohemian Rhapsody
-    ];
-
-    let currentIndex = 0;
-    const audio = document.getElementById("audioPlayer");
-    const songName = document.getElementById("songName");
-
-    async function loadTrack(index) {
-      const trackId = trackIds[index];
-      const res = await fetch(`https://api.spotify.com/v1/tracks/${trackId}`, {
-        headers: { Authorization: `Bearer ${TOKEN}` }
-      });
-      const data = await res.json();
-
-      // Mostramos solo el nombre cuando se revele
-      songName.textContent = "";
-
-      // Obtenemos la preview (30 segundos)
-      if (data.preview_url) {
-        audio.src = data.preview_url;
-      } else {
-        audio.src = "";
-        alert("Esta canción no tiene preview disponible 😢");
-      }
-
-      audio.dataset.songName = `${data.name} - ${data.artists[0].name}`;
+    function playerPressed(num) {
+      document.getElementById("message").innerText = num === 1 ? "¡Cele presionó primero!" : "¡Tade presionó primero!";
+      document.getElementById("player1-btn").disabled = true;
+      document.getElementById("player2-btn").disabled = true;
     }
 
-    document.getElementById("playBtn").addEventListener("click", () => {
-      if (audio.src) audio.play();
-      else loadTrack(currentIndex).then(() => audio.play());
-    });
+    function resetButtons() {
+      document.getElementById("player1-btn").disabled = false;
+      document.getElementById("player2-btn").disabled = false;
+      document.getElementById("message").innerText = "";
+    }
 
-    document.getElementById("nextBtn").addEventListener("click", () => {
-      currentIndex = (currentIndex + 1) % trackIds.length;
-      loadTrack(currentIndex);
-    });
+    function addPoint(num) {
+      if (num === 1) { score1++; document.getElementById("score1").innerText = score1; }
+      else { score2++; document.getElementById("score2").innerText = score2; }
+    }
 
-    document.getElementById("revealBtn").addEventListener("click", () => {
-      songName.textContent = audio.dataset.songName || "Ninguna canción cargada";
-    });
+    function subtractPoint(num) {
+      if (num === 1) { score1--; document.getElementById("score1").innerText = score1; }
+      else { score2--; document.getElementById("score2").innerText = score2; }
+    }
 
-    // Cargar la primera al iniciar
-    loadTrack(currentIndex);
+    // 🎵 Lista de canciones (IDs de Spotify de Top 50 Global)
+    const songs = [
+      { id: "1CkvWZme3pRgbzaxZnTl5X", name: "Blinding Lights - The Weeknd" },
+      { id: "2Fxmhks0bxGSBdJ92vM42m", name: "bad guy - Billie Eilish" },
+      { id: "7qiZfU4dY1lWllzX7mPBI3", name: "Shape of You - Ed Sheeran" },
+      { id: "4VqPOruhp5EdPBeR92t6lQ", name: "Bohemian Rhapsody - Queen" },
+      { id: "0e7ipj03S05BNilyu5bRzt", name: "Shallow - Lady Gaga, Bradley Cooper" },
+      { id: "6habFhsOp2NvshLv26DqMb", name: "Happier - Marshmello, Bastille" },
+      { id: "1fDsrQ23eTAVFElUMaf38X", name: "Peaches - Justin Bieber ft. Daniel Caesar" }
+    ];
+
+    let currentSongIndex = Math.floor(Math.random() * songs.length);
+
+    function loadSong(index) {
+      const song = songs[index];
+      const iframe = document.getElementById("spotify-frame");
+      iframe.src = `https://open.spotify.com/embed/track/${song.id}?utm_source=generator`;
+      document.getElementById("song-title").innerText = song.name;
+      document.getElementById("song-title").style.display = "none";
+    }
+
+    function nextSong() {
+      currentSongIndex = Math.floor(Math.random() * songs.length);
+      loadSong(currentSongIndex);
+    }
+
+    function revealSong() {
+      document.getElementById("song-title").style.display = "block";
+    }
+
+    // Cargar una canción aleatoria al abrir
+    window.onload = () => loadSong(currentSongIndex);
   </script>
 </body>
 </html>

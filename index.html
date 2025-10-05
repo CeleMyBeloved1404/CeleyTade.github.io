@@ -1,206 +1,103 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="es">
 <head>
-  <meta charset="UTF-8">
-  <title>Te amo mi bichita</title>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Juego Adivina la Canción</title>
   <style>
     body {
+      background: #121212;
+      color: #fff;
       font-family: Arial, sans-serif;
       text-align: center;
-      background: #f2f2f2;
-      margin: 0;
-      padding: 20px;
+      padding-top: 50px;
     }
-    h1 { margin-bottom: 20px; }
-    #video-container { margin: 20px auto; width: 560px; max-width: 100%; }
-    .player-buttons { display: flex; justify-content: space-around; margin: 20px 0; }
-    .player-btn {
-      flex: 1;
-      margin: 10px;
-      padding: 30px;
-      font-size: 24px;
-      font-weight: bold;
-      border: none;
-      border-radius: 15px;
-      cursor: pointer;
+    #player {
+      margin-top: 30px;
+    }
+    button {
+      background: #1db954;
       color: white;
-    }
-    #player1-btn { background-color: #fcc7ef; }
-    #player2-btn { background-color: #9bd6f8; }
-    #message { font-size: 20px; margin: 15px 0; font-weight: bold; }
-    .scores { display: flex; justify-content: space-around; margin-top: 20px; }
-    .score-box {
-      background: white;
-      padding: 15px;
-      border-radius: 10px;
-      box-shadow: 0px 3px 6px rgba(0,0,0,0.2);
-      width: 200px;
-    }
-    .score-box h2 { margin: 5px 0; }
-    .score-buttons { display: flex; justify-content: space-between; margin-top: 10px; }
-    .score-btn {
-      flex: 1;
-      margin: 0 5px;
-      padding: 10px;
+      border: none;
+      border-radius: 25px;
+      padding: 10px 20px;
+      margin: 5px;
+      cursor: pointer;
       font-size: 16px;
-      border: none;
-      border-radius: 8px;
-      cursor: pointer;
-      font-weight: bold;
-      color: white;
     }
-    .add { background-color: #2ecc71; }
-    .subtract { background-color: #e67e22; }
+    button:hover {
+      background: #1ed760;
+    }
   </style>
 </head>
 <body>
-  <h1>🎵💕 Adivina la canción con Cele y Tade 💕🎵</h1>
 
-  <div>
-    <input type="text" id="youtube-url" placeholder="Pega el URL de YouTube aquí" size="50">
-    <button onclick="loadVideo()">Cargar Video</button>
-  </div>
+  <h1>🎵 Adivina la Canción (Versión Spotify)</h1>
 
-  <div id="video-container">
-    <div id="player"></div>
-  </div>
-
-  <div class="player-buttons">
-    <button id="player1-btn" class="player-btn" onclick="playerPressed(1)">Cele</button>
-    <button id="player2-btn" class="player-btn" onclick="playerPressed(2)">Tade</button>
-  </div>
-
-  <button id="reset-btn" onclick="resetButtons()" style="margin-bottom:20px; font-size:18px;">Resetear Turno</button>
-
-  <div id="message"></div>
-
-  <div class="scores">
-    <div class="score-box">
-      <h2>Cele: <span id="score1">0</span></h2>
-      <div class="score-buttons">
-        <button class="score-btn add" onclick="addPoint(1)">+1</button>
-        <button class="score-btn subtract" onclick="subtractPoint(1)">-1</button>
-      </div>
+  <div id="player">
+    <audio id="audioPlayer" controls></audio>
+    <div>
+      <button id="playBtn">▶️ Play</button>
+      <button id="nextBtn">⏭️ Siguiente</button>
+      <button id="revealBtn">❓ Revelar Canción</button>
     </div>
-    <div class="score-box">
-      <h2>Tade: <span id="score2">0</span></h2>
-      <div class="score-buttons">
-        <button class="score-btn add" onclick="addPoint(2)">+1</button>
-        <button class="score-btn subtract" onclick="subtractPoint(2)">-1</button>
-      </div>
-    </div>
+    <p id="songName" style="margin-top: 20px; font-weight: bold;"></p>
   </div>
 
-  <!-- YouTube API -->
-  <script src="https://www.youtube.com/iframe_api"></script>
   <script>
-    let player;
-    let score1 = 0;
-    let score2 = 0;
+    // 🔑 TOKEN TEMPORAL DE SPOTIFY (reemplazalo con el tuyo)
+    const TOKEN = "1POdFZRZbvb...qqillRxMr2z";
 
-    function onYouTubeIframeAPIReady() {
-      player = new YT.Player('player', {
-        height: '315',
-        width: '560',
-        videoId: '',
-        events: {}
+    // Lista de canciones base (puede ser dinámica después)
+    const trackIds = [
+      "4uLU6hMCjMI75M1A2tKUQC", // Eminem - Lose Yourself
+      "3n3Ppam7vgaVa1iaRUc9Lp", // Michael Jackson - Billie Jean
+      "0VjIjW4GlUZAMYd2vXMi3b", // The Weeknd - Blinding Lights
+      "7GhIk7Il098yCjg4BQjzvb", // Rick Astley - Never Gonna Give You Up
+      "3AJwUDP919kvQ9QcozQPxg"  // Queen - Bohemian Rhapsody
+    ];
+
+    let currentIndex = 0;
+    const audio = document.getElementById("audioPlayer");
+    const songName = document.getElementById("songName");
+
+    async function loadTrack(index) {
+      const trackId = trackIds[index];
+      const res = await fetch(`https://api.spotify.com/v1/tracks/${trackId}`, {
+        headers: { Authorization: `Bearer ${TOKEN}` }
       });
+      const data = await res.json();
+
+      // Mostramos solo el nombre cuando se revele
+      songName.textContent = "";
+
+      // Obtenemos la preview (30 segundos)
+      if (data.preview_url) {
+        audio.src = data.preview_url;
+      } else {
+        audio.src = "";
+        alert("Esta canción no tiene preview disponible 😢");
+      }
+
+      audio.dataset.songName = `${data.name} - ${data.artists[0].name}`;
     }
 
-    function getYouTubeID(url) {
-      let regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=)([^#&?]*).*/;
-      let match = url.match(regExp);
-      return (match && match[2].length === 11) ? match[2] : null;
-    }
-
-    function loadVideo() {
-      let url = document.getElementById("youtube-url").value;
-      let videoId = getYouTubeID(url);
-      if (videoId) {
-        player.loadVideoById(videoId);
-        document.getElementById("message").innerText = "";
-      } else { alert("URL de YouTube inválida"); }
-    }
-
-    function addPoint(num) {
-      if (num === 1) { score1++; document.getElementById("score1").innerText = score1; }
-      else { score2++; document.getElementById("score2").innerText = score2; }
-    }
-
-    function subtractPoint(num) {
-      if (num === 1) { score1--; document.getElementById("score1").innerText = score1; }
-      else { score2--; document.getElementById("score2").innerText = score2; }
-    }
-  </script>
-
-  <!-- Firebase con sincronización -->
-  <script type="module">
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/12.3.0/firebase-app.js";
-    import { getAnalytics } from "https://www.gstatic.com/firebasejs/12.3.0/firebase-analytics.js";
-    import { getDatabase, ref, set, onValue } from "https://www.gstatic.com/firebasejs/12.3.0/firebase-database.js";
-
-    const firebaseConfig = {
-      apiKey: "AIzaSyDnm7xpjFtaqwYeCRJG0ms8QR7J9k010Tk",
-      authDomain: "juegoadivinalacancion-5152e.firebaseapp.com",
-      projectId: "juegoadivinalacancion-5152e",
-      storageBucket: "juegoadivinalacancion-5152e.firebasestorage.app",
-      messagingSenderId: "543704119927",
-      appId: "1:543704119927:web:613939b3ffee9dab25e472",
-      measurementId: "G-TYSK5TJCMZ"
-    };
-
-    const app = initializeApp(firebaseConfig);
-    const analytics = getAnalytics(app);
-    const db = getDatabase(app);
-
-    const playerButtons = {
-      1: document.getElementById("player1-btn"),
-      2: document.getElementById("player2-btn")
-    };
-
-    // Cuando alguien presiona un botón
-    window.playerPressed = function(num) {
-      if (player && player.pauseVideo) player.pauseVideo();
-
-      // Mostrar mensaje local inmediato
-      document.getElementById("message").innerText =
-        num === 1 ? "¡Cele presionó primero!" : "¡Tade presionó primero!";
-
-      // Deshabilitar botones localmente
-      playerButtons[1].disabled = true;
-      playerButtons[2].disabled = true;
-      playerButtons[1].style.display = num === 1 ? "inline-block" : "none";
-      playerButtons[2].style.display = num === 2 ? "inline-block" : "none";
-
-      // Guardar en Firebase
-      set(ref(db, 'game/lastClick'), { player: num, time: Date.now() });
-    }
-
-    // Escuchar cambios en Firebase
-    onValue(ref(db, 'game/lastClick'), (snapshot) => {
-      const data = snapshot.val();
-      if (!data) return;
-      const num = data.player;
-
-      // Mostrar mensaje sincronizado
-      document.getElementById("message").innerText =
-        num === 1 ? "¡Cele presionó primero!" : "¡Tade presionó primero!";
-
-      playerButtons[1].disabled = true;
-      playerButtons[2].disabled = true;
-      playerButtons[1].style.display = num === 1 ? "inline-block" : "none";
-      playerButtons[2].style.display = num === 2 ? "inline-block" : "none";
+    document.getElementById("playBtn").addEventListener("click", () => {
+      if (audio.src) audio.play();
+      else loadTrack(currentIndex).then(() => audio.play());
     });
 
-    // Resetear turno
-    window.resetButtons = function() {
-      playerButtons[1].disabled = false;
-      playerButtons[2].disabled = false;
-      playerButtons[1].style.display = "inline-block";
-      playerButtons[2].style.display = "inline-block";
-      document.getElementById("message").innerText = "";
-      set(ref(db, 'game/lastClick'), null);
-    }
+    document.getElementById("nextBtn").addEventListener("click", () => {
+      currentIndex = (currentIndex + 1) % trackIds.length;
+      loadTrack(currentIndex);
+    });
+
+    document.getElementById("revealBtn").addEventListener("click", () => {
+      songName.textContent = audio.dataset.songName || "Ninguna canción cargada";
+    });
+
+    // Cargar la primera al iniciar
+    loadTrack(currentIndex);
   </script>
 </body>
 </html>

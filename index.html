@@ -54,11 +54,11 @@
   </style>
 </head>
 <body>
-  <h1>🎵💕 Adivina la cancion con Cele y Tade 💕🎵</h1>
+  <h1>🎵💕 Adivina la canción con Cele y Tade 💕🎵</h1>
 
   <div>
-    <input type="text" id="youtube-url" placeholder="Paste YouTube URL here" size="50">
-    <button onclick="loadVideo()">Load Video</button>
+    <input type="text" id="youtube-url" placeholder="Pega el URL de YouTube aquí" size="50">
+    <button onclick="loadVideo()">Cargar Video</button>
   </div>
 
   <div id="video-container">
@@ -69,6 +69,7 @@
     <button id="player1-btn" class="player-btn" onclick="playerPressed(1)">Cele</button>
     <button id="player2-btn" class="player-btn" onclick="playerPressed(2)">Tade</button>
   </div>
+
   <button id="reset-btn" onclick="resetButtons()" style="margin-bottom:20px; font-size:18px;">Resetear Turno</button>
 
   <div id="message"></div>
@@ -92,7 +93,47 @@
 
   <!-- YouTube API -->
   <script src="https://www.youtube.com/iframe_api"></script>
+  <script>
+    let player;
+    let score1 = 0;
+    let score2 = 0;
 
+    function onYouTubeIframeAPIReady() {
+      player = new YT.Player('player', {
+        height: '315',
+        width: '560',
+        videoId: '',
+        events: {}
+      });
+    }
+
+    function getYouTubeID(url) {
+      let regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=)([^#&?]*).*/;
+      let match = url.match(regExp);
+      return (match && match[2].length === 11) ? match[2] : null;
+    }
+
+    function loadVideo() {
+      let url = document.getElementById("youtube-url").value;
+      let videoId = getYouTubeID(url);
+      if (videoId) {
+        player.loadVideoById(videoId);
+        document.getElementById("message").innerText = "";
+      } else { alert("URL de YouTube inválida"); }
+    }
+
+    function addPoint(num) {
+      if (num === 1) { score1++; document.getElementById("score1").innerText = score1; }
+      else { score2++; document.getElementById("score2").innerText = score2; }
+    }
+
+    function subtractPoint(num) {
+      if (num === 1) { score1--; document.getElementById("score1").innerText = score1; }
+      else { score2--; document.getElementById("score2").innerText = score2; }
+    }
+  </script>
+
+  <!-- Firebase con sincronización -->
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/12.3.0/firebase-app.js";
     import { getAnalytics } from "https://www.gstatic.com/firebasejs/12.3.0/firebase-analytics.js";
@@ -112,97 +153,46 @@
     const analytics = getAnalytics(app);
     const db = getDatabase(app);
 
-    let player;
-    let score1 = 0;
-    let score2 = 0;
     const playerButtons = {
       1: document.getElementById("player1-btn"),
       2: document.getElementById("player2-btn")
     };
 
-    function getYouTubeID(url) {
-      let regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=)([^#&?]*).*/;
-      let match = url.match(regExp);
-      return (match && match[2].length === 11) ? match[2] : null;
-    }
-
-    function loadVideo() {
-      let url = document.getElementById("youtube-url").value;
-      let videoId = getYouTubeID(url);
-      if (videoId) {
-        player.loadVideoById(videoId);
-        document.getElementById("message").innerText = "";
-        set(ref(db, 'game/videoState'), { status: "paused", time: 0 }); // reset video state
-      } else { alert("Invalid YouTube URL"); }
-    }
-
-    function addPoint(num) {
-      if (num === 1) { score1++; document.getElementById("score1").innerText = score1; }
-      else { score2++; document.getElementById("score2").innerText = score2; }
-    }
-
-    function subtractPoint(num) {
-      if (num === 1) { score1--; document.getElementById("score1").innerText = score1; }
-      else { score2--; document.getElementById("score2").innerText = score2; }
-    }
-
-    function onYouTubeIframeAPIReady() {
-      player = new YT.Player('player', {
-        height: '315',
-        width: '560',
-        videoId: '',
-        events: { 'onStateChange': onPlayerStateChange }
-      });
-    }
-
-    function onPlayerStateChange(event) {
-      if (!db) return;
-      const state = event.data;
-      const currentTime = player.getCurrentTime();
-      if (state === YT.PlayerState.PLAYING) {
-        set(ref(db, 'game/videoState'), { status: "playing", time: currentTime });
-      } else if (state === YT.PlayerState.PAUSED) {
-        set(ref(db, 'game/videoState'), { status: "paused", time: currentTime });
-      }
-    }
-
-    let isSyncing = false;
-
-    onValue(ref(db, 'game/videoState'), (snapshot) => {
-      const data = snapshot.val();
-      if (!data || !player) return;
-      if (isSyncing) return;
-
-      const localTime = player.getCurrentTime();
-      const remoteTime = data.time;
-
-      isSyncing = true;
-
-      if (Math.abs(localTime - remoteTime) > 0.5) player.seekTo(remoteTime, true);
-
-      if (data.status === "playing" && player.getPlayerState() !== YT.PlayerState.PLAYING) player.playVideo();
-      if (data.status === "paused" && player.getPlayerState() !== YT.PlayerState.PAUSED) player.pauseVideo();
-
-      isSyncing = false;
-    });
-
-    // Botones sincronizados
-    function playerPressed(num) {
+    // Cuando alguien presiona un botón
+    window.playerPressed = function(num) {
       if (player && player.pauseVideo) player.pauseVideo();
+
+      // Mostrar mensaje local inmediato
+      document.getElementById("message").innerText =
+        num === 1 ? "¡Cele presionó primero!" : "¡Tade presionó primero!";
+
+      // Deshabilitar botones localmente
+      playerButtons[1].disabled = true;
+      playerButtons[2].disabled = true;
+      playerButtons[1].style.display = num === 1 ? "inline-block" : "none";
+      playerButtons[2].style.display = num === 2 ? "inline-block" : "none";
+
+      // Guardar en Firebase
       set(ref(db, 'game/lastClick'), { player: num, time: Date.now() });
     }
 
+    // Escuchar cambios en Firebase
     onValue(ref(db, 'game/lastClick'), (snapshot) => {
       const data = snapshot.val();
       if (!data) return;
       const num = data.player;
-      document.getElementById("message").innerText = num === 1 ? "¡Cele presionó primero!" : "¡Tade presionó primero!";
+
+      // Mostrar mensaje sincronizado
+      document.getElementById("message").innerText =
+        num === 1 ? "¡Cele presionó primero!" : "¡Tade presionó primero!";
+
       playerButtons[1].disabled = true;
       playerButtons[2].disabled = true;
       playerButtons[1].style.display = num === 1 ? "inline-block" : "none";
       playerButtons[2].style.display = num === 2 ? "inline-block" : "none";
     });
 
+    // Resetear turno
     window.resetButtons = function() {
       playerButtons[1].disabled = false;
       playerButtons[2].disabled = false;
@@ -211,7 +201,6 @@
       document.getElementById("message").innerText = "";
       set(ref(db, 'game/lastClick'), null);
     }
-
   </script>
 </body>
 </html>

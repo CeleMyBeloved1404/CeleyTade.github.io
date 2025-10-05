@@ -51,25 +51,39 @@
     }
     .add { background-color: #2ecc71; }
     .subtract { background-color: #e67e22; }
-    #song-title { font-size: 20px; font-weight: bold; margin: 15px 0; }
-    #play-btn { margin: 15px; padding: 15px 30px; font-size: 18px; border-radius: 10px; cursor: pointer; }
-    #reveal-btn { margin: 15px; padding: 10px 20px; font-size: 16px; border-radius: 8px; cursor: pointer; background-color: #2ecc71; color: white; border: none; }
-    #yt-player-container { display: none; } /* oculto */
+
+    /* 🎵 Spotify section */
+    #spotify-player {
+      margin-top: 40px;
+    }
+    #spotify-frame {
+      border-radius: 12px;
+      width: 300px;
+      height: 380px;
+      border: none;
+    }
+    #reveal-btn {
+      margin-top: 10px;
+      padding: 10px 20px;
+      font-size: 16px;
+      border: none;
+      border-radius: 8px;
+      background-color: #1DB954;
+      color: white;
+      cursor: pointer;
+      font-weight: bold;
+    }
+    #song-title {
+      margin-top: 10px;
+      font-size: 18px;
+      font-weight: bold;
+      color: #333;
+      display: none;
+    }
   </style>
 </head>
 <body>
   <h1>🎵💕 Adivina la cancion con Cele y Tade 💕🎵</h1>
-
-  <!-- Botón para reproducir canción sincronizada -->
-  <div>
-    <button id="play-btn" onclick="togglePlay()">▶️ Play/Pause Canción</button>
-    <button id="reveal-btn" onclick="revealSong()">👀 Revelar canción</button>
-  </div>
-
-  <!-- Contenedor oculto de YouTube -->
-  <div id="yt-player-container">
-    <div id="player"></div>
-  </div>
 
   <!-- Botones de jugadores -->
   <div class="player-buttons">
@@ -79,9 +93,7 @@
   <button id="reset-btn" onclick="resetButtons()" style="margin-bottom:20px; font-size:18px;">Resetear Turno</button>
 
   <div id="message"></div>
-  <div id="song-title"></div>
 
-  <!-- Puntajes -->
   <div class="scores">
     <div class="score-box">
       <h2>Cele: <span id="score1">0</span></h2>
@@ -99,122 +111,77 @@
     </div>
   </div>
 
-  <!-- YouTube API -->
-  <script src="https://www.youtube.com/iframe_api"></script>
+  <!-- 🎵 Spotify Player Section -->
+  <div id="spotify-player">
+    <h2>🎶 Reproductor de canciones</h2>
+    <iframe id="spotify-frame" 
+      src="https://open.spotify.com/embed/track/4VqPOruhp5EdPBeR92t6lQ?utm_source=generator" 
+      allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture" 
+      loading="lazy">
+    </iframe>
+    <br>
+    <button id="next-btn" onclick="nextSong()">⏭️ Siguiente canción</button>
+    <button id="reveal-btn" onclick="revealSong()">👀 Revelar canción</button>
+    <div id="song-title"></div>
+  </div>
 
-  <!-- Firebase -->
-  <script type="module">
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/12.3.0/firebase-app.js";
-    import { getAnalytics } from "https://www.gstatic.com/firebasejs/12.3.0/firebase-analytics.js";
-    import { getDatabase, ref, set, onValue } from "https://www.gstatic.com/firebasejs/12.3.0/firebase-database.js";
+  <script>
+    let score1 = 0, score2 = 0;
 
-    // Firebase config
-    const firebaseConfig = {
-      apiKey: "AIzaSyDnm7xpjFtaqwYeCRJG0ms8QR7J9k010Tk",
-      authDomain: "juegoadivinalacancion-5152e.firebaseapp.com",
-      projectId: "juegoadivinalacancion-5152e",
-      storageBucket: "juegoadivinalacancion-5152e.firebasestorage.app",
-      messagingSenderId: "543704119927",
-      appId: "1:543704119927:web:613939b3ffee9dab25e472",
-      measurementId: "G-TYSK5TJCMZ"
-    };
-
-    const app = initializeApp(firebaseConfig);
-    const analytics = getAnalytics(app);
-    const db = getDatabase(app);
-
-    // Variables de puntaje
-    let score1 = 0;
-    let score2 = 0;
-
-    // YouTube player
-    let player;
-    let currentSong = {
-      id: "dQw4w9WgXcQ", // Puedes cambiar a cualquier video de YouTube
-      title: "Canción Misteriosa"
-    };
-    let isPlaying = false;
-
-    function onYouTubeIframeAPIReady() {
-      player = new YT.Player('player', {
-        height: '315',
-        width: '560',
-        videoId: currentSong.id,
-        events: { 'onReady': () => player.pauseVideo() }
-      });
-    }
-
-    // ----------------- Sincronización -----------------
-    const playerButtons = {
-      1: document.getElementById("player1-btn"),
-      2: document.getElementById("player2-btn")
-    };
-
-    // Botón jugador
     function playerPressed(num) {
-      set(ref(db, 'game/lastClick'), { player: num, time: Date.now() });
-    }
-
-    onValue(ref(db, 'game/lastClick'), (snapshot) => {
-      const data = snapshot.val();
-      if (!data) return;
-      const num = data.player;
       document.getElementById("message").innerText = num === 1 ? "¡Cele presionó primero!" : "¡Tade presionó primero!";
-      playerButtons[1].disabled = true;
-      playerButtons[2].disabled = true;
-      playerButtons[1].style.display = num === 1 ? "inline-block" : "none";
-      playerButtons[2].style.display = num === 2 ? "inline-block" : "none";
-    });
+      document.getElementById("player1-btn").disabled = true;
+      document.getElementById("player2-btn").disabled = true;
+    }
 
-    // Reset
-    window.resetButtons = function() {
-      playerButtons[1].disabled = false;
-      playerButtons[2].disabled = false;
-      playerButtons[1].style.display = "inline-block";
-      playerButtons[2].style.display = "inline-block";
+    function resetButtons() {
+      document.getElementById("player1-btn").disabled = false;
+      document.getElementById("player2-btn").disabled = false;
       document.getElementById("message").innerText = "";
-      set(ref(db, 'game/lastClick'), null);
     }
 
-    // Puntajes sincronizados
     function addPoint(num) {
-      if(num===1){ score1++; set(ref(db,'game/score1'), score1);}
-      else {score2++; set(ref(db,'game/score2'), score2);}
+      if (num === 1) { score1++; document.getElementById("score1").innerText = score1; }
+      else { score2++; document.getElementById("score2").innerText = score2; }
     }
+
     function subtractPoint(num) {
-      if(num===1){ score1--; set(ref(db,'game/score1'), score1);}
-      else {score2--; set(ref(db,'game/score2'), score2);}
+      if (num === 1) { score1--; document.getElementById("score1").innerText = score1; }
+      else { score2--; document.getElementById("score2").innerText = score2; }
     }
 
-    onValue(ref(db,'game/score1'), snap=>{score1 = snap.val()||0; document.getElementById("score1").innerText = score1;});
-    onValue(ref(db,'game/score2'), snap=>{score2 = snap.val()||0; document.getElementById("score2").innerText = score2;});
+    // 🎵 Lista de canciones (IDs de Spotify de Top 50 Global)
+    const songs = [
+      { id: "1CkvWZme3pRgbzaxZnTl5X", name: "Blinding Lights - The Weeknd" },
+      { id: "2Fxmhks0bxGSBdJ92vM42m", name: "bad guy - Billie Eilish" },
+      { id: "7qiZfU4dY1lWllzX7mPBI3", name: "Shape of You - Ed Sheeran" },
+      { id: "4VqPOruhp5EdPBeR92t6lQ", name: "Bohemian Rhapsody - Queen" },
+      { id: "0e7ipj03S05BNilyu5bRzt", name: "Shallow - Lady Gaga, Bradley Cooper" },
+      { id: "6habFhsOp2NvshLv26DqMb", name: "Happier - Marshmello, Bastille" },
+      { id: "1fDsrQ23eTAVFElUMaf38X", name: "Peaches - Justin Bieber ft. Daniel Caesar" }
+    ];
 
-    // ----------------- Reproductor sincronizado -----------------
-    function togglePlay() {
-      isPlaying = !isPlaying;
-      set(ref(db,'game/play'), isPlaying);
+    let currentSongIndex = Math.floor(Math.random() * songs.length);
+
+    function loadSong(index) {
+      const song = songs[index];
+      const iframe = document.getElementById("spotify-frame");
+      iframe.src = `https://open.spotify.com/embed/track/${song.id}?utm_source=generator`;
+      document.getElementById("song-title").innerText = song.name;
+      document.getElementById("song-title").style.display = "none";
     }
 
-    onValue(ref(db,'game/play'), snap=>{
-      const playState = snap.val();
-      if(playState){
-        player.playVideo();
-      } else {
-        player.pauseVideo();
-      }
-      isPlaying = playState;
-    });
+    function nextSong() {
+      currentSongIndex = Math.floor(Math.random() * songs.length);
+      loadSong(currentSongIndex);
+    }
 
-    // ----------------- Revelar canción -----------------
     function revealSong() {
-      set(ref(db,'game/reveal'), currentSong.title);
+      document.getElementById("song-title").style.display = "block";
     }
 
-    onValue(ref(db,'game/reveal'), snap=>{
-      const title = snap.val();
-      if(title) document.getElementById("song-title").innerText = title;
-    });
-
+    // Cargar una canción aleatoria al abrir
+    window.onload = () => loadSong(currentSongIndex);
   </script>
 </body>
 </html>

@@ -4,7 +4,6 @@
 <meta charset="UTF-8">
 <title>Te amo mi bichita</title>
 <style>
-/* --- Estilos originales se mantienen --- */
 body { font-family: Arial, sans-serif; text-align:center; background:#f2f2f2; margin:0; padding:20px; }
 h1 { margin-bottom:20px; }
 .player-buttons { display:flex; justify-content:space-around; margin:20px 0; }
@@ -20,12 +19,10 @@ h1 { margin-bottom:20px; }
 .add { background-color:#2ecc71; }
 .subtract { background-color:#e67e22; }
 
-/* --- Barra tipo Spotify --- */
 #controls { margin:20px 0; display:flex; flex-direction:column; align-items:center; }
 #progress-container { width:300px; height:10px; background:#ccc; border-radius:5px; margin-top:10px; overflow:hidden; }
 #progress { height:100%; width:0; background:#2ecc71; border-radius:5px; transition: width 0.1s linear; }
-
-#yt-player-container { display:none; }
+#yt-player-container { width:0; height:0; overflow:hidden; }
 #song-title { font-size:18px; font-weight:bold; margin-top:10px; filter:blur(5px); }
 </style>
 </head>
@@ -44,7 +41,9 @@ h1 { margin-bottom:20px; }
   </div>
 </div>
 
-<div id="yt-player-container"><div id="player"></div></div>
+<div id="yt-player-container">
+  <div id="player"></div>
+</div>
 
 <div class="player-buttons">
   <button id="player1-btn" class="player-btn" onclick="playerPressed(1)">Cele</button>
@@ -77,7 +76,7 @@ h1 { margin-bottom:20px; }
 <script src="https://www.youtube.com/iframe_api"></script>
 
 <script>
-/* --- Firebase --- */
+// --- Firebase ---
 const firebaseConfig = {
   apiKey:"AIzaSyDnm7xpjFtaqwYeCRJG0ms8QR7J9k010Tk",
   authDomain:"juegoadivinalacancion-5152e.firebaseapp.com",
@@ -91,7 +90,7 @@ const app = firebase.initializeApp(firebaseConfig);
 const analytics = firebase.analytics();
 const db = firebase.database();
 
-/* --- Variables --- */
+// --- Variables ---
 let score1=0, score2=0, isPlaying=false;
 let player;
 const playlist = [
@@ -101,7 +100,7 @@ const playlist = [
 ];
 let currentSong = playlist[0];
 
-/* --- YouTube Player --- */
+// --- YouTube Player ---
 function onYouTubeIframeAPIReady(){
   player = new YT.Player('player', {
     height:'315', width:'560', videoId:currentSong.id,
@@ -109,7 +108,7 @@ function onYouTubeIframeAPIReady(){
   });
 }
 
-/* --- Barra de progreso --- */
+// --- Barra de progreso ---
 function onStateChange(event){
   if(event.data == YT.PlayerState.PLAYING){
     requestAnimationFrame(updateProgress);
@@ -123,7 +122,7 @@ function updateProgress(){
   }
 }
 
-/* --- Jugadores --- */
+// --- Jugadores ---
 function playerPressed(num){ db.ref('game/lastClick').set({player:num,time:Date.now()}); }
 function resetButtons(){
   document.getElementById("player1-btn").disabled=false;
@@ -144,18 +143,20 @@ db.ref('game/lastClick').on('value', snap=>{
   document.getElementById("player2-btn").style.display=num===2?"inline-block":"none";
 });
 
-/* --- Puntajes --- */
+// --- Puntajes ---
 function addPoint(num){ if(num===1){score1++; db.ref('game/score1').set(score1);} else {score2++; db.ref('game/score2').set(score2);} }
 function subtractPoint(num){ if(num===1){score1--; db.ref('game/score1').set(score1);} else {score2--; db.ref('game/score2').set(score2);} }
 db.ref('game/score1').on('value', snap=>{score1=snap.val()||0; document.getElementById("score1").innerText=score1;});
 db.ref('game/score2').on('value', snap=>{score2=snap.val()||0; document.getElementById("score2").innerText=score2;});
 
-/* --- YouTube sincronizado --- */
+// --- YouTube sincronizado ---
 function togglePlay(){ db.ref('game/play').set(!isPlaying); }
 db.ref('game/play').on('value', snap=>{
   const val=snap.val();
-  if(val) player.playVideo(); else player.pauseVideo();
-  isPlaying=val;
+  if(player){
+    if(val) player.playVideo(); else player.pauseVideo();
+    isPlaying=val;
+  }
 });
 
 function nextSong(){

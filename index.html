@@ -1,187 +1,181 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <title>Te amo mi bichita</title>
-  <style>
-    body {
-      font-family: Arial, sans-serif;
-      text-align: center;
-      background: #f2f2f2;
-      margin: 0;
-      padding: 20px;
-    }
-    h1 { margin-bottom: 20px; }
-    #video-container { margin: 20px auto; width: 560px; max-width: 100%; }
-    .player-buttons { display: flex; justify-content: space-around; margin: 20px 0; }
-    .player-btn {
-      flex: 1;
-      margin: 10px;
-      padding: 30px;
-      font-size: 24px;
-      font-weight: bold;
-      border: none;
-      border-radius: 15px;
-      cursor: pointer;
-      color: white;
-    }
-    #player1-btn { background-color: #fcc7ef; }
-    #player2-btn { background-color: #9bd6f8; }
-    #message { font-size: 20px; margin: 15px 0; font-weight: bold; }
-    .scores { display: flex; justify-content: space-around; margin-top: 20px; }
-    .score-box {
-      background: white;
-      padding: 15px;
-      border-radius: 10px;
-      box-shadow: 0px 3px 6px rgba(0,0,0,0.2);
-      width: 200px;
-    }
-    .score-box h2 { margin: 5px 0; }
-    .score-buttons { display: flex; justify-content: space-between; margin-top: 10px; }
-    .score-btn {
-      flex: 1;
-      margin: 0 5px;
-      padding: 10px;
-      font-size: 16px;
-      border: none;
-      border-radius: 8px;
-      cursor: pointer;
-      font-weight: bold;
-      color: white;
-    }
-    .add { background-color: #2ecc71; }
-    .subtract { background-color: #e67e22; }
+<meta charset="UTF-8">
+<title>Te amo mi bichita</title>
+<style>
+body { font-family: Arial, sans-serif; text-align:center; background:#f2f2f2; margin:0; padding:20px; }
+h1 { margin-bottom:20px; }
+.player-buttons { display:flex; justify-content:space-around; margin:20px 0; }
+.player-btn { flex:1; margin:10px; padding:30px; font-size:24px; font-weight:bold; border:none; border-radius:15px; cursor:pointer; color:white; }
+#player1-btn { background-color:#fcc7ef; }
+#player2-btn { background-color:#9bd6f8; }
+#message { font-size:20px; margin:15px 0; font-weight:bold; }
+.scores { display:flex; justify-content:space-around; margin-top:20px; }
+.score-box { background:white; padding:15px; border-radius:10px; box-shadow:0px 3px 6px rgba(0,0,0,0.2); width:200px; }
+.score-box h2 { margin:5px 0; }
+.score-buttons { display:flex; justify-content:space-between; margin-top:10px; }
+.score-btn { flex:1; margin:0 5px; padding:10px; font-size:16px; border:none; border-radius:8px; cursor:pointer; font-weight:bold; color:white; }
+.add { background-color:#2ecc71; }
+.subtract { background-color:#e67e22; }
 
-    /* 🎵 Spotify section */
-    #spotify-player {
-      margin-top: 40px;
-    }
-    #spotify-frame {
-      border-radius: 12px;
-      width: 300px;
-      height: 380px;
-      border: none;
-    }
-    #reveal-btn {
-      margin-top: 10px;
-      padding: 10px 20px;
-      font-size: 16px;
-      border: none;
-      border-radius: 8px;
-      background-color: #1DB954;
-      color: white;
-      cursor: pointer;
-      font-weight: bold;
-    }
-    #song-title {
-      margin-top: 10px;
-      font-size: 18px;
-      font-weight: bold;
-      color: #333;
-      display: none;
-    }
-  </style>
+#controls { margin:20px 0; display:flex; flex-direction:column; align-items:center; }
+#progress-container { width:300px; height:10px; background:#ccc; border-radius:5px; margin-top:10px; overflow:hidden; }
+#progress { height:100%; width:0; background:#2ecc71; border-radius:5px; transition: width 0.1s linear; }
+#yt-player-container { width:0; height:0; overflow:hidden; }
+#song-title { font-size:18px; font-weight:bold; margin-top:10px; filter:blur(5px); }
+</style>
 </head>
 <body>
-  <h1>🎵💕 Adivina la cancion con Cele y Tade 💕🎵</h1>
 
-  <!-- Botones de jugadores -->
-  <div class="player-buttons">
-    <button id="player1-btn" class="player-btn" onclick="playerPressed(1)">Cele</button>
-    <button id="player2-btn" class="player-btn" onclick="playerPressed(2)">Tade</button>
+<h1>🎵💕 Adivina la cancion con Cele y Tade 💕🎵</h1>
+
+<div id="controls">
+  <div>
+    <button onclick="togglePlay()">▶️ Play/Pause</button>
+    <button onclick="nextSong()">⏭ Siguiente Canción</button>
+    <button onclick="revealSong()">👀 Revelar Canción</button>
   </div>
-  <button id="reset-btn" onclick="resetButtons()" style="margin-bottom:20px; font-size:18px;">Resetear Turno</button>
+  <div id="progress-container">
+    <div id="progress"></div>
+  </div>
+</div>
 
-  <div id="message"></div>
+<div id="yt-player-container">
+  <div id="player"></div>
+</div>
 
-  <div class="scores">
-    <div class="score-box">
-      <h2>Cele: <span id="score1">0</span></h2>
-      <div class="score-buttons">
-        <button class="score-btn add" onclick="addPoint(1)">+1</button>
-        <button class="score-btn subtract" onclick="subtractPoint(1)">-1</button>
-      </div>
+<div class="player-buttons">
+  <button id="player1-btn" class="player-btn" onclick="playerPressed(1)">Cele</button>
+  <button id="player2-btn" class="player-btn" onclick="playerPressed(2)">Tade</button>
+</div>
+<button id="reset-btn" onclick="resetButtons()">Resetear Turno</button>
+<div id="message"></div>
+<div id="song-title"></div>
+
+<div class="scores">
+  <div class="score-box">
+    <h2>Cele: <span id="score1">0</span></h2>
+    <div class="score-buttons">
+      <button class="score-btn add" onclick="addPoint(1)">+1</button>
+      <button class="score-btn subtract" onclick="subtractPoint(1)">-1</button>
     </div>
-    <div class="score-box">
-      <h2>Tade: <span id="score2">0</span></h2>
-      <div class="score-buttons">
-        <button class="score-btn add" onclick="addPoint(2)">+1</button>
-        <button class="score-btn subtract" onclick="subtractPoint(2)">-1</button>
-      </div>
+  </div>
+  <div class="score-box">
+    <h2>Tade: <span id="score2">0</span></h2>
+    <div class="score-buttons">
+      <button class="score-btn add" onclick="addPoint(2)">+1</button>
+      <button class="score-btn subtract" onclick="subtractPoint(2)">-1</button>
     </div>
   </div>
+</div>
 
-  <!-- 🎵 Spotify Player Section -->
-  <div id="spotify-player">
-    <h2>🎶 Reproductor de canciones</h2>
-    <iframe id="spotify-frame" 
-      src="https://open.spotify.com/embed/track/4VqPOruhp5EdPBeR92t6lQ?utm_source=generator" 
-      allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture" 
-      loading="lazy">
-    </iframe>
-    <br>
-    <button id="next-btn" onclick="nextSong()">⏭️ Siguiente canción</button>
-    <button id="reveal-btn" onclick="revealSong()">👀 Revelar canción</button>
-    <div id="song-title"></div>
-  </div>
+<script src="https://www.gstatic.com/firebasejs/12.3.0/firebase-app.js"></script>
+<script src="https://www.gstatic.com/firebasejs/12.3.0/firebase-database.js"></script>
+<script src="https://www.gstatic.com/firebasejs/12.3.0/firebase-analytics.js"></script>
+<script src="https://www.youtube.com/iframe_api"></script>
 
-  <script>
-    let score1 = 0, score2 = 0;
+<script>
+// --- Firebase ---
+const firebaseConfig = {
+  apiKey:"AIzaSyDnm7xpjFtaqwYeCRJG0ms8QR7J9k010Tk",
+  authDomain:"juegoadivinalacancion-5152e.firebaseapp.com",
+  projectId:"juegoadivinalacancion-5152e",
+  storageBucket:"juegoadivinalacancion-5152e.firebasestorage.app",
+  messagingSenderId:"543704119927",
+  appId:"1:543704119927:web:613939b3ffee9dab25e472",
+  measurementId:"G-TYSK5TJCMZ"
+};
+const app = firebase.initializeApp(firebaseConfig);
+const analytics = firebase.analytics();
+const db = firebase.database();
 
-    function playerPressed(num) {
-      document.getElementById("message").innerText = num === 1 ? "¡Cele presionó primero!" : "¡Tade presionó primero!";
-      document.getElementById("player1-btn").disabled = true;
-      document.getElementById("player2-btn").disabled = true;
-    }
+// --- Variables ---
+let score1=0, score2=0, isPlaying=false;
+let player;
+const playlist = [
+  {id:"dQw4w9WgXcQ", title:"Canción Misteriosa 1"},
+  {id:"3JZ4pnNtyxQ", title:"Canción Misteriosa 2"},
+  {id:"L_jWHffIx5E", title:"Canción Misteriosa 3"}
+];
+let currentSong = playlist[0];
 
-    function resetButtons() {
-      document.getElementById("player1-btn").disabled = false;
-      document.getElementById("player2-btn").disabled = false;
-      document.getElementById("message").innerText = "";
-    }
+// --- YouTube Player ---
+function onYouTubeIframeAPIReady(){
+  player = new YT.Player('player', {
+    height:'315', width:'560', videoId:currentSong.id,
+    events:{'onReady':()=>player.pauseVideo(), 'onStateChange': onStateChange}
+  });
+}
 
-    function addPoint(num) {
-      if (num === 1) { score1++; document.getElementById("score1").innerText = score1; }
-      else { score2++; document.getElementById("score2").innerText = score2; }
-    }
+// --- Barra de progreso ---
+function onStateChange(event){
+  if(event.data == YT.PlayerState.PLAYING){
+    requestAnimationFrame(updateProgress);
+  }
+}
+function updateProgress(){
+  if(player && player.getCurrentTime && player.getDuration){
+    const pct = (player.getCurrentTime()/player.getDuration())*100;
+    document.getElementById("progress").style.width = pct+"%";
+    if(isPlaying) requestAnimationFrame(updateProgress);
+  }
+}
 
-    function subtractPoint(num) {
-      if (num === 1) { score1--; document.getElementById("score1").innerText = score1; }
-      else { score2--; document.getElementById("score2").innerText = score2; }
-    }
+// --- Jugadores ---
+function playerPressed(num){ db.ref('game/lastClick').set({player:num,time:Date.now()}); }
+function resetButtons(){
+  document.getElementById("player1-btn").disabled=false;
+  document.getElementById("player2-btn").disabled=false;
+  document.getElementById("player1-btn").style.display="inline-block";
+  document.getElementById("player2-btn").style.display="inline-block";
+  document.getElementById("message").innerText="";
+  db.ref('game/lastClick').set(null);
+}
+db.ref('game/lastClick').on('value', snap=>{
+  const data=snap.val();
+  if(!data) return;
+  const num=data.player;
+  document.getElementById("message").innerText=num===1?"¡Cele presionó primero!":"¡Tade presionó primero!";
+  document.getElementById("player1-btn").disabled=true;
+  document.getElementById("player2-btn").disabled=true;
+  document.getElementById("player1-btn").style.display=num===1?"inline-block":"none";
+  document.getElementById("player2-btn").style.display=num===2?"inline-block":"none";
+});
 
-    // 🎵 Lista de canciones (IDs de Spotify de Top 50 Global)
-    const songs = [
-      { id: "1CkvWZme3pRgbzaxZnTl5X", name: "Blinding Lights - The Weeknd" },
-      { id: "2Fxmhks0bxGSBdJ92vM42m", name: "bad guy - Billie Eilish" },
-      { id: "7qiZfU4dY1lWllzX7mPBI3", name: "Shape of You - Ed Sheeran" },
-      { id: "4VqPOruhp5EdPBeR92t6lQ", name: "Bohemian Rhapsody - Queen" },
-      { id: "0e7ipj03S05BNilyu5bRzt", name: "Shallow - Lady Gaga, Bradley Cooper" },
-      { id: "6habFhsOp2NvshLv26DqMb", name: "Happier - Marshmello, Bastille" },
-      { id: "1fDsrQ23eTAVFElUMaf38X", name: "Peaches - Justin Bieber ft. Daniel Caesar" }
-    ];
+// --- Puntajes ---
+function addPoint(num){ if(num===1){score1++; db.ref('game/score1').set(score1);} else {score2++; db.ref('game/score2').set(score2);} }
+function subtractPoint(num){ if(num===1){score1--; db.ref('game/score1').set(score1);} else {score2--; db.ref('game/score2').set(score2);} }
+db.ref('game/score1').on('value', snap=>{score1=snap.val()||0; document.getElementById("score1").innerText=score1;});
+db.ref('game/score2').on('value', snap=>{score2=snap.val()||0; document.getElementById("score2").innerText=score2;});
 
-    let currentSongIndex = Math.floor(Math.random() * songs.length);
+// --- YouTube sincronizado ---
+function togglePlay(){ db.ref('game/play').set(!isPlaying); }
+db.ref('game/play').on('value', snap=>{
+  const val=snap.val();
+  if(player){
+    if(val) player.playVideo(); else player.pauseVideo();
+    isPlaying=val;
+  }
+});
 
-    function loadSong(index) {
-      const song = songs[index];
-      const iframe = document.getElementById("spotify-frame");
-      iframe.src = `https://open.spotify.com/embed/track/${song.id}?utm_source=generator`;
-      document.getElementById("song-title").innerText = song.name;
-      document.getElementById("song-title").style.display = "none";
-    }
+function nextSong(){
+  const next = playlist[Math.floor(Math.random()*playlist.length)];
+  db.ref('game/song').set(next);
+}
+db.ref('game/song').on('value', snap=>{
+  const val=snap.val();
+  if(!val) return;
+  currentSong=val;
+  if(player) player.loadVideoById(currentSong.id);
+  document.getElementById("song-title").innerText="";
+});
 
-    function nextSong() {
-      currentSongIndex = Math.floor(Math.random() * songs.length);
-      loadSong(currentSongIndex);
-    }
-
-    function revealSong() {
-      document.getElementById("song-title").style.display = "block";
-    }
-
-    // Cargar una canción aleatoria al abrir
-    window.onload = () => loadSong(currentSongIndex);
-  </script>
+function revealSong(){ db.ref('game/reveal').set(currentSong.title); }
+db.ref('game/reveal').on('value', snap=>{
+  const title = snap.val();
+  if(title) document.getElementById("song-title").innerText=title;
+});
+</script>
 </body>
 </html>

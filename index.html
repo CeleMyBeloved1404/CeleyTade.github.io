@@ -70,13 +70,13 @@ h1 { margin-bottom:20px; }
   </div>
 </div>
 
-<script src="https://www.gstatic.com/firebasejs/12.3.0/firebase-app.js"></script>
-<script src="https://www.gstatic.com/firebasejs/12.3.0/firebase-database.js"></script>
-<script src="https://www.gstatic.com/firebasejs/12.3.0/firebase-analytics.js"></script>
+<!-- 🔥 Firebase + YouTube -->
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-analytics-compat.js"></script>
 <script src="https://www.youtube.com/iframe_api"></script>
 
 <script>
-// --- Firebase ---
 const firebaseConfig = {
   apiKey:"AIzaSyDnm7xpjFtaqwYeCRJG0ms8QR7J9k010Tk",
   authDomain:"juegoadivinalacancion-5152e.firebaseapp.com",
@@ -86,96 +86,80 @@ const firebaseConfig = {
   appId:"1:543704119927:web:613939b3ffee9dab25e472",
   measurementId:"G-TYSK5TJCMZ"
 };
-const app = firebase.initializeApp(firebaseConfig);
-const analytics = firebase.analytics();
+firebase.initializeApp(firebaseConfig);
 const db = firebase.database();
 
-// --- Variables ---
 let score1=0, score2=0, isPlaying=false;
 let player;
-const playlist = [
+const playlist=[
   {id:"dQw4w9WgXcQ", title:"Canción Misteriosa 1"},
   {id:"3JZ4pnNtyxQ", title:"Canción Misteriosa 2"},
   {id:"L_jWHffIx5E", title:"Canción Misteriosa 3"}
 ];
-let currentSong = playlist[0];
+let currentSong=playlist[0];
 
-// --- YouTube Player ---
+// --- YouTube API ---
 function onYouTubeIframeAPIReady(){
   player = new YT.Player('player', {
-    height:'315', width:'560', videoId:currentSong.id,
-    events:{'onReady':()=>player.pauseVideo(), 'onStateChange': onStateChange}
+    videoId:currentSong.id,
+    events:{ 'onReady':()=>player.pauseVideo(), 'onStateChange': syncProgress }
   });
 }
 
-// --- Barra de progreso ---
-function onStateChange(event){
-  if(event.data == YT.PlayerState.PLAYING){
-    requestAnimationFrame(updateProgress);
-  }
+function syncProgress(event){
+  if(event.data === YT.PlayerState.PLAYING) updateProgress();
 }
 function updateProgress(){
-  if(player && player.getCurrentTime && player.getDuration){
-    const pct = (player.getCurrentTime()/player.getDuration())*100;
-    document.getElementById("progress").style.width = pct+"%";
+  if(player && player.getCurrentTime){
+    const pct=(player.getCurrentTime()/player.getDuration())*100;
+    document.getElementById("progress").style.width=pct+"%";
     if(isPlaying) requestAnimationFrame(updateProgress);
   }
 }
 
-// --- Jugadores ---
+// --- Botones ---
 function playerPressed(num){ db.ref('game/lastClick').set({player:num,time:Date.now()}); }
 function resetButtons(){
-  document.getElementById("player1-btn").disabled=false;
-  document.getElementById("player2-btn").disabled=false;
-  document.getElementById("player1-btn").style.display="inline-block";
-  document.getElementById("player2-btn").style.display="inline-block";
-  document.getElementById("message").innerText="";
   db.ref('game/lastClick').set(null);
 }
 db.ref('game/lastClick').on('value', snap=>{
-  const data=snap.val();
-  if(!data) return;
-  const num=data.player;
-  document.getElementById("message").innerText=num===1?"¡Cele presionó primero!":"¡Tade presionó primero!";
-  document.getElementById("player1-btn").disabled=true;
-  document.getElementById("player2-btn").disabled=true;
-  document.getElementById("player1-btn").style.display=num===1?"inline-block":"none";
-  document.getElementById("player2-btn").style.display=num===2?"inline-block":"none";
+  const d=snap.val(); if(!d) return;
+  document.getElementById("message").innerText=d.player===1?"¡Cele presionó primero!":"¡Tade presionó primero!";
 });
 
 // --- Puntajes ---
-function addPoint(num){ if(num===1){score1++; db.ref('game/score1').set(score1);} else {score2++; db.ref('game/score2').set(score2);} }
-function subtractPoint(num){ if(num===1){score1--; db.ref('game/score1').set(score1);} else {score2--; db.ref('game/score2').set(score2);} }
-db.ref('game/score1').on('value', snap=>{score1=snap.val()||0; document.getElementById("score1").innerText=score1;});
-db.ref('game/score2').on('value', snap=>{score2=snap.val()||0; document.getElementById("score2").innerText=score2;});
+function addPoint(n){ db.ref('game/score'+n).set((n===1?++score1:++score2)); }
+function subtractPoint(n){ db.ref('game/score'+n).set((n===1?--score1:--score2)); }
+db.ref('game/score1').on('value', s=>{score1=s.val()||0; document.getElementById("score1").innerText=score1;});
+db.ref('game/score2').on('value', s=>{score2=s.val()||0; document.getElementById("score2").innerText=score2;});
 
-// --- YouTube sincronizado ---
+// --- Sincronizar Reproductor ---
 function togglePlay(){ db.ref('game/play').set(!isPlaying); }
-db.ref('game/play').on('value', snap=>{
-  const val=snap.val();
+db.ref('game/play').on('value', s=>{
+  const v=s.val();
   if(player){
-    if(val) player.playVideo(); else player.pauseVideo();
-    isPlaying=val;
+    if(v) player.playVideo(); else player.pauseVideo();
+    isPlaying=v;
   }
 });
 
 function nextSong(){
-  const next = playlist[Math.floor(Math.random()*playlist.length)];
+  const next=playlist[Math.floor(Math.random()*playlist.length)];
   db.ref('game/song').set(next);
 }
-db.ref('game/song').on('value', snap=>{
-  const val=snap.val();
-  if(!val) return;
-  currentSong=val;
+db.ref('game/song').on('value', s=>{
+  const v=s.val(); if(!v) return;
+  currentSong=v;
   if(player) player.loadVideoById(currentSong.id);
   document.getElementById("song-title").innerText="";
 });
 
 function revealSong(){ db.ref('game/reveal').set(currentSong.title); }
-db.ref('game/reveal').on('value', snap=>{
-  const title = snap.val();
+db.ref('game/reveal').on('value', s=>{
+  const title=s.val();
   if(title) document.getElementById("song-title").innerText=title;
 });
 </script>
+
 </body>
 </html>
